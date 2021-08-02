@@ -75,6 +75,8 @@ endif
 
 all: sequential vector valarray openmp taskloop stl ranges opencl sycl $(EXTRA)
 
+cupla: nstream-cupla
+
 sequential: p2p stencil transpose nstream dgemm sparse
 
 vector: p2p-vector p2p-hyperplane-vector stencil-vector transpose-vector nstream-vector sparse-vector dgemm-vector \
@@ -153,6 +155,9 @@ p2p-hyperplane-vector: p2p-hyperplane-openmp.cc prk_util.h
 
 #nstream-opencl: nstream-opencl.cc nstream.cl prk_util.h prk_opencl.h
 #	$(CXX) $(CXXFLAGS) $< $(OPENCLFLAGS) -o $@
+
+%-cupla: %-cupla.cpp prk_cupla_util.h
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $< -o $@
 
 %-mpi: %-mpi.cc prk_util.h prk_mpi.h
 	$(CXX) $(CXXFLAGS) $(MPIINC) $< $(MPILIB) -o $@
