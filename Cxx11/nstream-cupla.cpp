@@ -75,8 +75,8 @@ struct nstream
       if (i < n) {
         A[i] += B[i] + scalar * C[i];
       }
-    };
-}
+    }
+};
 
 struct nstream2
 {
@@ -87,8 +87,8 @@ struct nstream2
       for (unsigned int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x) {
         A[i] += B[i] + scalar * C[i];
       }
-    };
-}
+    }
+};
 
 int main(int argc, char * argv[])
 {

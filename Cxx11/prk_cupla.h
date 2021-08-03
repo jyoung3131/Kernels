@@ -75,7 +75,8 @@ namespace prk
 
             private:
                 int nDevices;
-                std::vector<cudaDeviceProp> vDevices;
+                //std::vector<cudaDeviceProp> vDevices;
+                //std::vector<AccDevProps> vDevices;
 
             public:
                 int maxThreadsPerBlock;
@@ -84,14 +85,22 @@ namespace prk
 
                 info() {
                     prk::CUDA::check( cudaGetDeviceCount(&nDevices) );
-                    vDevices.resize(nDevices);
-                    for (int i=0; i<nDevices; ++i) {
-                        cudaGetDeviceProperties(&(vDevices[i]), i);
-                        if (i==0) {
+                    //vDevices.resize(nDevices);
+                    for (int i=0; i< nDevices; ++i) {
+                        //cudaGetDeviceProperties(&(vDevices[i]), i);
+			/*alpaka::getAccDevProps(&vDevices[i]); 
+			if (i==0) {
                             maxThreadsPerBlock = vDevices[i].maxThreadsPerBlock;
                             for (int j=0; j<3; ++j) {
                                 maxThreadsDim[j]   = vDevices[i].maxThreadsDim[j];
                                 maxGridSize[j]     = vDevices[i].maxGridSize[j];
+                            }*/
+			//cudaDeviceGetAttribute(&maxThreadsPerBlock, cudaDevAttrMaxThreadsPerBlock,i);
+			if (i==0) {
+                            maxThreadsPerBlock = 1;
+                            for (int j=0; j<3; ++j) {
+                                maxThreadsDim[j]   = 1;
+                                maxGridSize[j]     = 1;
                             }
                         }
                     }
@@ -116,7 +125,7 @@ namespace prk
 
                 void print() {
                     for (int i=0; i<nDevices; ++i) {
-                        std::cout << "device name: " << vDevices[i].name << "\n";
+                        /*std::cout << "device name: " << vDevices[i].name << "\n";
                         std::cout << "total global memory:     " << vDevices[i].totalGlobalMem << "\n";
                         std::cout << "max threads per block:   " << vDevices[i].maxThreadsPerBlock << "\n";
                         std::cout << "max threads dim:         " << vDevices[i].maxThreadsDim[0] << ","
@@ -126,7 +135,7 @@ namespace prk
                                                                  << vDevices[i].maxGridSize[1] << ","
                                                                  << vDevices[i].maxGridSize[2] << "\n";
                         std::cout << "memory clock rate (KHz): " << vDevices[i].memoryClockRate << "\n";
-                        std::cout << "memory bus width (bits): " << vDevices[i].memoryBusWidth << "\n";
+                        std::cout << "memory bus width (bits): " << vDevices[i].memoryBusWidth << "\n";*/
                     }
                 }
 
@@ -175,13 +184,13 @@ namespace prk
             return ptr;
         }
 
-        template <typename T>
+        /*template <typename T>
         T * malloc_managed(size_t n) {
             T * ptr;
             size_t bytes = n * sizeof(T);
             prk::CUDA::check( cudaMallocManaged((void**)&ptr, bytes) );
             return ptr;
-        }
+        }*/
 
         template <typename T>
         void free(T * ptr) {

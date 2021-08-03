@@ -31,6 +31,9 @@ endif
 #ASMFLAGS = -fsource-asm -fverbose-asm -fasm-blocks -fcode-asm
 ASMFLAGS = -fverbose-asm
 
+#Specify the includes for Alpaka, CUPLA, and boost as well as the desired backend accelerator
+CUPLAFLAGS = -I${ALPAKA_ROOT}/include -I${CUPLA_ROOT}/include -I${BOOST_ROOT}/include -DALPAKA_ACC_CPU_B_SEQ_T_THREADS_ENABLED=O -DCUPLA_ACC_CpuSerial
+
 OMPFLAGS = $(OPENMPFLAG) -DUSE_OPENMP
 TARGETFLAGS = $(OFFLOADFLAG)
 OPENCLFLAGS = $(OPENCLFLAG) -DCL_HPP_MINIMUM_OPENCL_VERSION=120 -DCL_HPP_TARGET_OPENCL_VERSION=120
@@ -156,8 +159,8 @@ p2p-hyperplane-vector: p2p-hyperplane-openmp.cc prk_util.h
 #nstream-opencl: nstream-opencl.cc nstream.cl prk_util.h prk_opencl.h
 #	$(CXX) $(CXXFLAGS) $< $(OPENCLFLAGS) -o $@
 
-%-cupla: %-cupla.cpp prk_cupla_util.h
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $< -o $@
+%-cupla: %-cupla.cpp prk_cupla.h
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(CUPLAFLAGS) $< -o $@
 
 %-mpi: %-mpi.cc prk_util.h prk_mpi.h
 	$(CXX) $(CXXFLAGS) $(MPIINC) $< $(MPILIB) -o $@
@@ -301,6 +304,7 @@ clean:
 	-rm -f *.dwarf
 	-rm -rf *.dSYM # Mac
 	-rm -f nstream transpose stencil p2p sparse dgemm
+	-rm -f *-cupla
 	-rm -f *-vector
 	-rm -f *-valarray
 	-rm -f *-openmp
