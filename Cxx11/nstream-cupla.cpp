@@ -177,11 +177,9 @@ int main(int argc, char * argv[])
       }
 
       if (grid_stride) {
-	  CUPLA_KERNEL(nstream2)(dimGrid,dimBlock)(static_cast<unsigned>(length), scalar, d_A, d_B, d_C);
-          //nstream2<<<dimGrid, dimBlock>>>(static_cast<unsigned>(length), scalar, d_A, d_B, d_C);
+	  CUPLA_KERNEL_OPTI(nstream2)(dimGrid,dimBlock)(static_cast<unsigned>(length), scalar, d_A, d_B, d_C);
       } else {
-	  CUPLA_KERNEL(nstream)(dimGrid,dimBlock)(static_cast<unsigned>(length), scalar, d_A, d_B, d_C);
-          //nstream<<<dimGrid, dimBlock>>>(static_cast<unsigned>(length), scalar, d_A, d_B, d_C);
+	  CUPLA_KERNEL_OPTI(nstream)(dimGrid,dimBlock)(static_cast<unsigned>(length), scalar, d_A, d_B, d_C);
       }
       prk::CUDA::sync();
     }
@@ -207,7 +205,7 @@ int main(int argc, char * argv[])
   ar *= length;
 
   double asum(0);
-  for (int i=0; i<length; i++) {
+  for (size_t i=0; i<length; i++) {
       asum += prk::abs(h_A[i]);
   }
 

@@ -51,17 +51,23 @@ ASMFLAGS = -fverbose-asm
 ALPAKA_ACC_TYPE= CUPLA_ACC_GpuHipRt
 
 # Specify standalone accelerator defines 
+# --------------------------------------
 # See https://github.com/alpaka-group/cupla/blob/master/alpaka/include/alpaka/standalone for examples
 #ALPAKA_ACC=ALPAKA_ACC_CPU_B_SEQ_T_SEQ_ENABLED
-#ALPAKA_ACC=ALPAKA_ACC_CPU_B_OMP2_T_SEQ_ENABLED
 #ALPAKA_ACC=ALPAKA_ACC_CPU_B_SEQ_T_THREADS_ENABLED
+
+#Use the OMP flag with any OpenMP backends
+#ALPAKA_OMP_FLAG=-fopenmp
+#ALPAKA_ACC=ALPAKA_ACC_CPU_B_OMP2_T_SEQ_ENABLED
 
 ALPAKA_ACC=ALPAKA_ACC_GPU_HIP_ENABLED
 CXX=hipcc
 
 
 #Specify the includes for Alpaka, CUPLA, and boost as well as the desired backend accelerator
-CUPLAFLAGS = -I${ALPAKA_ROOT}/include -I${CUPLA_ROOT}/include -I${BOOST_ROOT}/include -D${ALPAKA_ACC_TYPE} -D${ALPAKA_ACC}=ON
+#TODO - add fopenmp flag for OMP backend
+#CUPLAFLAGS = ${ALPAKA_OMP_FLAG} -I${ALPAKA_ROOT}/include -I${CUPLA_ROOT}/include -I${BOOST_ROOT}/include -D${ALPAKA_ACC_TYPE} -D${ALPAKA_ACC}=ON
+CUPLAFLAGS = ${ALPAKA_OMP_FLAG} -I${CUPLA_ROOT}/include -I${CUPLA_ROOT}/alpaka/include -I${BOOST_ROOT}/include -D${ALPAKA_ACC_TYPE} -D${ALPAKA_ACC}=ON
 ############################################################
 
 OMPFLAGS = $(OPENMPFLAG) -DUSE_OPENMP
