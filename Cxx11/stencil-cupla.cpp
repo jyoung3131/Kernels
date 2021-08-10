@@ -165,22 +165,25 @@ int main(int argc, char* argv[])
   std::cout << "Type of stencil      = " << (star ? "star" : "grid") << std::endl;
   std::cout << "Radius of stencil    = " << radius << std::endl;
 
-  auto stencil = nothing;
+  auto stencil = nothing();
   if (star) {
       switch (radius) {
           case 1: stencil = star1; break;
-          case 2: stencil = star2; break;
+/*          case 2: stencil = star2; break;
           case 3: stencil = star3; break;
           case 4: stencil = star4; break;
           case 5: stencil = star5; break;
+*/
       }
   } else {
       switch (radius) {
           case 1: stencil = grid1; break;
-          case 2: stencil = grid2; break;
+/*
+	  case 2: stencil = grid2; break;
           case 3: stencil = grid3; break;
           case 4: stencil = grid4; break;
           case 5: stencil = grid5; break;
+*/
       }
   }
 
@@ -223,10 +226,10 @@ int main(int argc, char* argv[])
     if (iter==1) stencil_time = prk::wtime();
 
     // Apply the stencil operator
-    stencil<<<dimGrid, dimBlock>>>(n, d_in, d_out);
+    CUPLA_KERNEL_OPTI(stencil)(dimGrid, dimBlock)(n, d_in, d_out);
 
     // Add constant to solution to force refresh of neighbor data, if any
-    add<<<dimGrid, dimBlock>>>(n, d_in);
+    CUPLA_KERNEL_OPTI(add)(dimGrid, dimBlock)(n, d_in);
 
     prk::CUDA::check( cudaDeviceSynchronize() );
   }

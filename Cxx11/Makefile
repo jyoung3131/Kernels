@@ -62,12 +62,10 @@ ALPAKA_ACC_TYPE= CUPLA_ACC_GpuHipRt
 
 ALPAKA_ACC=ALPAKA_ACC_GPU_HIP_ENABLED
 CXX=hipcc
-
+CUPLAHIPFLAGS=--amdgpu-target=gfx906 --amdgpu-target=gfx908 -D__HIPCC__ -std=c++14 -DALPAKA_DEBUG=0 -DALPAKA_DEBUG_OFFLOAD_ASSUME_HOST -DALPAKA_OFFLOAD_MAX_BLOCK_SIZE=256 -DALPAKA_BLOCK_SHARED_DYN_MEMBER_ALLOC_KIB=30 -DCUPLA_STREAM_ASYNC_ENABLED=1 -DALPAKA_DEBUG=0 -DALPAKA_DEBUG_OFFLOAD_ASSUME_HOST -DALPAKA_OFFLOAD_MAX_BLOCK_SIZE=256 -DALPAKA_BLOCK_SHARED_DYN_MEMBER_ALLOC_KIB=30 -DBOOST_ALL_NO_LIB -I/opt/rocm-4.2.0/rocrand/include -I/opt/rocm-4.2.0/hiprand/include
 
 #Specify the includes for Alpaka, CUPLA, and boost as well as the desired backend accelerator
-#TODO - add fopenmp flag for OMP backend
-#CUPLAFLAGS = ${ALPAKA_OMP_FLAG} -I${ALPAKA_ROOT}/include -I${CUPLA_ROOT}/include -I${BOOST_ROOT}/include -D${ALPAKA_ACC_TYPE} -D${ALPAKA_ACC}=ON
-CUPLAFLAGS = ${ALPAKA_OMP_FLAG} -I${CUPLA_ROOT}/include -I${CUPLA_ROOT}/alpaka/include -I${BOOST_ROOT}/include -D${ALPAKA_ACC_TYPE} -D${ALPAKA_ACC}=ON
+CUPLAFLAGS = ${ALPAKA_OMP_FLAG} -I${CUPLA_ROOT}/include -I${CUPLA_ROOT}/alpaka/include -I${BOOST_ROOT}/include -D${ALPAKA_ACC_TYPE} -D${ALPAKA_ACC}=ON 
 ############################################################
 
 OMPFLAGS = $(OPENMPFLAG) -DUSE_OPENMP
@@ -114,7 +112,7 @@ endif
 
 all: sequential vector valarray openmp taskloop stl ranges opencl sycl $(EXTRA)
 
-cupla: nstream-cupla
+cupla: nstream-cupla stencil-cupla
 
 sequential: p2p stencil transpose nstream dgemm sparse
 
@@ -196,7 +194,7 @@ p2p-hyperplane-vector: p2p-hyperplane-openmp.cc prk_util.h
 #	$(CXX) $(CXXFLAGS) $< $(OPENCLFLAGS) -o $@
 
 %-cupla: %-cupla.cpp prk_cupla.h
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(CUPLAFLAGS) $< -o $@
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(CUPLAFLAGS) $(CUPLAHIPFLAGS) $< -o $@
 
 %-mpi: %-mpi.cc prk_util.h prk_mpi.h
 	$(CXX) $(CXXFLAGS) $(MPIINC) $< $(MPILIB) -o $@

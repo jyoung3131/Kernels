@@ -85,8 +85,12 @@ namespace prk
 
                 info() {
                     prk::CUDA::check( cudaGetDeviceCount(&nDevices) );
-                    //vDevices.resize(nDevices);
-                    for (int i=0; i< nDevices; ++i) {
+                    
+		    for (size_t i=0; i< nDevices; ++i) {
+			//Define acctype and device type
+			//auto const accDev = alpaka::getDevByIdx<Acc>(0u);
+			//std::cout<< " grid" << alpaka::getAccDevProps(accDev).m_gridBlockExtentMax; 
+
                         //cudaGetDeviceProperties(&(vDevices[i]), i);
 			/*alpaka::getAccDevProps(&vDevices[i]); 
 			if (i==0) {
@@ -95,7 +99,6 @@ namespace prk
                                 maxThreadsDim[j]   = vDevices[i].maxThreadsDim[j];
                                 maxGridSize[j]     = vDevices[i].maxGridSize[j];
                             }*/
-			//cudaDeviceGetAttribute(&maxThreadsPerBlock, cudaDevAttrMaxThreadsPerBlock,i);
 			if (i==0) {
                             maxThreadsPerBlock = 1;
                             for (int j=0; j<3; ++j) {
