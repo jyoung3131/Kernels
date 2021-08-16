@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 #
 # Copyright (c) 2015, Intel Corporation
+# Copyright (c) 2021, NVIDIA
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -32,32 +33,31 @@
 
 #*******************************************************************
 #
-# NAME:    dgemm
+# NAME:    transpose
 #
-# PURPOSE: This program tests the efficiency with which a dense matrix
-#          dense multiplication is carried out
+# PURPOSE: This program measures the time for the transpose of a
+#          column-major stored matrix into a row-major stored matrix.
 #
-# USAGE:   The program takes as input the matrix order,
-#          the number of times the matrix-matrix multiplication 
-#          is carried out.
+# USAGE:   Program input is the matrix order and the number of times to
+#          repeat the operation:
 #
-#          <progname> <# iterations> <matrix order>
+#          transpose <# iterations> <matrix_size>
 #
-#          The output consists of diagnostics to make sure the 
-#          algorithm worked, and of timing statistics.
+#          The output consists of diagnostics to make sure the
+#          transpose worked and timing statistics.
 #
-# HISTORY: Written by Rob Van der Wijngaart, February 2009.
+# HISTORY: Written by  Rob Van der Wijngaart, February 2009.
 #          Converted to Python by Jeff Hammond, February 2016.
-#          Fixed timing err, Ave+std_dev, more pythonic, Tim Mattson May 2021
 # *******************************************************************
 
-import numpy as np
 import sys
 print('Python version = ', str(sys.version_info.major)+'.'+str(sys.version_info.minor))
 if sys.version_info >= (3, 3):
     from time import process_time as timer
 else:
     from timeit import default_timer as timer
+
+import cupy
 
 def main():
 
@@ -66,78 +66,60 @@ def main():
     # ********************************************************************
 
     print('Parallel Research Kernels version ') #, PRKVERSION
-    print('Python Dense matrix-matrix multiplication: C = A x B')
+    print('Python CuPy Matrix transpose: B = A^T')
 
     if len(sys.argv) != 3:
         print('argument count = ', len(sys.argv))
-        sys.exit("Usage: ./dgemm <# iterations> <matrix order>")
+        sys.exit("Usage: ./transpose <# iterations> <matrix order>")
 
-    iters = int(sys.argv[1])
-    if iters < 1:
+    iterations = int(sys.argv[1])
+    if iterations < 1:
         sys.exit("ERROR: iterations must be >= 1")
 
     order = int(sys.argv[2])
     if order < 1:
         sys.exit("ERROR: order must be >= 1")
 
-    print('Number of iterations = ', iters)
+    print('Number of iterations = ', iterations)
     print('Matrix order         = ', order)
 
     # ********************************************************************
     # ** Allocate space for the input and transpose matrix
     # ********************************************************************
 
-    A = np.zeros((order,order))
-    B = np.zeros((order,order))
-    C = np.zeros((order,order))
-    for i in range(order):
-        A[:,i] = float(i)
-        B[:,i] = float(i)
+    A = cupy.arange(order*order,dtype=float).reshape(order,order)
+    B = cupy.zeros((order,order))
 
+    for k in range(0,iterations+1):
 
-    for kiter in range(0,iters+1):
-        if kiter==1: 
-             t0 = timer()
-             tSum=0.0
-             tsqSum=0.0
-        for i in range(order):
-            for k in range(order):
-                for j in range(order):
-                    C[i][j] += A[i][k] * B[k][j]
-        if kiter>0:
-             tkiter = timer()
-             t = tkiter - t0
-             tSum = tSum + t
-             tsqSum = tsqSum+t*t
-             t0 = tkiter
+        if k<1: t0 = timer()
 
-    dgemmAve    = tSum/iters
-    dgemmStdDev = ((tsqSum-iters*dgemmAve*dgemmAve)/(iters-1))**0.5 
+        B += A.T
+        A += 1.0
+
+    cupy.cuda.runtime.deviceSynchronize()
+
+    t1 = timer()
+    trans_time = t1 - t0
 
     # ********************************************************************
     # ** Analyze and output results.
     # ********************************************************************
 
-    checksum = 0.0;
-    for i in range(order):
-        for j in range(order):
-            checksum += C[i][j];
-
-    ref_checksum = 0.25*order*order*order*(order-1.0)*(order-1.0)
-    ref_checksum *= (iters+1)
+    A = (iterations+1.)*(cupy.arange(order*order).reshape(order,order).T+iterations/2.0)
+    abserr = cupy.linalg.norm(cupy.reshape(B-A,order*order),ord=1)
 
     epsilon=1.e-8
-    if abs((checksum - ref_checksum)/ref_checksum) < epsilon:
+    nbytes = 2 * order**2 * 8 # 8 is not sizeof(double) in bytes, but allows for comparison to C etc.
+    if abserr < epsilon:
         print('Solution validates')
-        nflops = 2.0*order*order*order
-        recipDiff = (1.0/(dgemmAve-dgemmStdDev) - 1.0/(dgemmAve+dgemmStdDev))
-        GfStdDev = 1.e-6*nflops*recipDiff/2.0
-        print('nflops: ',nflops)
-        print('Rate: ',1.e-6*nflops/dgemmAve,' +/- (MF/s): ',GfStdDev)
+        avgtime = trans_time/iterations
+        print('Rate (MB/s): ',1.e-6*nbytes/avgtime, ' Avg time (s): ', avgtime)
     else:
-        print('ERROR: Checksum = ', checksum,', Reference checksum = ', ref_checksum,'\n')
+        print('error ',abserr, ' exceeds threshold ',epsilon)
         sys.exit("ERROR: solution did not validate")
 
 
 if __name__ == '__main__':
     main()
+
